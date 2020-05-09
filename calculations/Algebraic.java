@@ -21,7 +21,7 @@ public class Algebraic {
 		char[] iter = str.toCharArray();
 		int startParen = 0;
 		int endParen = 0;
-		
+
 		boolean operationStart = false; // false to add multiplication symbol, true to do nothing
 		boolean operationEnd = false;   // false to add multiplication symbol, true to do nothing
 		// Locate parenthetical statement, set aside to solve.
@@ -113,7 +113,7 @@ public class Algebraic {
 				SplitInfo info = splitter(str, '^');
 				char[] operand = info.getExpression().toCharArray();
 				int pos = info.getIndex();
-				
+
 				// If digits surround exponent, solve them.
 				if ((Character.isDigit(operand[pos-1])) && (Character.isDigit(operand[pos+1]))) {
 					String ans = expon(operand, pos);
@@ -126,86 +126,103 @@ public class Algebraic {
 				}
 			}
 		} while ((str.contains("^")) && (exState == true));
-		
+
 		boolean multState = true;
 		// Simplify multiplication/division expressions
 		do {
 			if ((str.contains("*")) || (str.contains("/"))) {
-				
+
 			}
 		} while ((str.contains("*") || str.contains("/")) && (multState == true));
 		return "";
 	}
 
-	// Handles float exponentiation by parsing floats from string elements then recombining float into string.
+	// Handles double exponentiation by parsing doubles from string elements then recombining double into string.
 	public String expon(char[] str, int index) {
 		int len = str.length;
 
 		String p1 = Arrays.copyOfRange(str, 0, index - 1).toString();
-		float digit_1 = Float.parseFloat(p1);
+		double digit_1 = Double.parseDouble(p1);
 
 		String p2 = Arrays.copyOfRange(str, index + 1, len - 1).toString();
-		float digit_2 = Float.parseFloat(p2);
+		double digit_2 = Double.parseDouble(p2);
 
-		float ans = (float) Math.pow(digit_1, digit_2);
+		double ans = (double) Math.pow(digit_1, digit_2);
 		String result = String.valueOf(ans);
 		return result;
 	}
-	// Handles float multiplication by parsing float from string elements then recombining float into string.
-	// Deprecate and reform into a new method, multdiv that uses an if statement from a additional parameter.
-	public String multiplication(SplitInfo split) {
+	// Handles multiplication and division for variables and doubles.
+	public String multdiv(SplitInfo split) {
+		// Breakdown the object passed in.
 		String exp = split.getExpression();
 		int index = split.getIndex();
 		VarInfo[] vars = split.getVars();
+
+		// Variables used within method
+		StringBuilder result = new StringBuilder();
+		StringDouble element1 = new StringDouble(exp.substring(0, index-1));
+		StringDouble element2 = new StringDouble(exp.substring(index+1, exp.length()));
+		boolean checkElement = element1.getBool();
+
+		// No variables
 		if (vars.length == 0) {
-			float n1 = Float.parseFloat(exp.substring(0,index-1));
-			float n2 = Float.parseFloat(exp.substring(index+1, exp.length()));
-			float fin = n1*n2;
-			String result = String.valueOf(fin);
-			return result;
+			double n1 = element1.getDouble();
+			double n2 = element2.getDouble();
+			result.append(String.valueOf(n1*n2));
 		}
-		else if (vars.length == 2) {
-			char v1 = vars[0].getVar();
-			String o1 = vars[0].getOrder().getString();
-			char v2 = vars[1].getVar();
-			String o2 = vars[1].getOrder().getString();
-			if (v1 == v2) {
-				boolean numeric = true;
-				String order = null;
-				try {
-					float o3 = Float.parseFloat(o1) + Float.parseFloat(o2);
-					order = String.valueOf(o3);
-				} catch (NumberFormatException e) {
-					numeric = false;
-				}
-				if (numeric) {
-					String result = Character.toString(v1) + "^" + order;
-					return result;
+		// 1 Variable, must determine which element contains a variable.
+		else if (vars.length == 1) {
+			if (checkElement) { // this means element 2 is our variable
+				// Remove the operator, this is a simplified element.
+				StringDouble coeff = new StringDouble(element1.getDouble() * vars[0].getCoeff().getDouble());
+				result.append(coeff.getString());
+				// If order is not 1, ensure order is appended to stringbuilder.
+				if (vars[0].getOrder().getDouble() != 1) {
+					result.append(vars[0].getVar().getString() + "^" + vars[0].getOrder().getString());
 				}
 				else {
-					Boolean numeric2 = true;
-					String result;
-					try {
-						float temp = Float.parseFloat(o2);
-					} catch (NumberFormatException e) {
-						numeric2 = false;
-					}
-					if (numeric2) {
-						result = Character.toString(v1) + "^" + o2 + o1;
-					}
-					else {
-						result = Character.toString(v1) + "^" + o1 + o2;
-					}
-					return result;
+					result.append(vars[0].getVar().getString());
 				}
 			}
-			else {
-				if (Float.parseFloat(o1) > 1) {
-					
+			else {       		// this means element 1 is our variable
+				// Remove the operator, this is a simplified element.
+				StringDouble coeff = new StringDouble(element2.getDouble() * vars[0].getCoeff().getDouble());
+				result.append(coeff.getString());
+				// If order is not 1, ensure order is appended to stringbuilder.
+				if (vars[0].getOrder().getDouble() != 1) {
+					result.append(vars[0].getVar().getString() + "^" + vars[0].getOrder().getString());
+				}
+				else {
+					result.append(vars[0].getVar().getString());
 				}
 			}
 		}
-		return "";
+		// 2 Variables, must multiply coefficients and check to add orders.
+		else {
+			// Multiply coefficients
+			StringDouble coeff = new StringDouble(vars[0].getCoeff().getDouble() * vars[1].getCoeff().getDouble());
+			result.append(coeff);
+			if (vars[0].getVar().getString() == vars[1].getVar().getString()) {
+				StringDouble order = new StringDouble(vars[0].getOrder().getDouble() + vars[1].getOrder().getDouble());
+				result.append(vars[0].getVar().getString());
+				result.append("^");
+				result.append(order.getString());
+			}
+			else {
+				result.append(vars[0].getVar().getString());
+				if (vars[0].getOrder().getDouble() != 1) {
+					result.append("^");
+					result.append(vars[0].getOrder().getString());
+				}
+				result.append(vars[0].getVar().getString());
+				if (vars[1].getOrder().getDouble() != 1) {
+					result.append("^");
+					result.append(vars[1].getOrder().getString());
+				}
+				
+			}
+		}
+		return result.toString();
 	}
 	public String division(SplitInfo split) {
 		return "";

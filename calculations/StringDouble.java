@@ -6,32 +6,32 @@ package calculations;
  * This avoids the need to create float objects for calculations.
  */
 
-public class StringFloat {
+public class StringDouble {
 	// Fields
 	String str;
-	float flt;
+	double dbl;
 	boolean isBoth = true;
 	
 	// Primary constructor.
 	/* @args String s Input is a string that is fed to the Float parseFloat() method.
 	 * Depending on the try statement, isBoth is set to true or false to ensure no passed exceptions.
 	 */
-	StringFloat(String s) {
+	StringDouble(String s) {
 		str = s;
 		try {
-			flt = Float.parseFloat(s);
+			dbl = Double.parseDouble(s);
 		} catch (NumberFormatException e) {
 			isBoth = false;
 		}
 	}
-	StringFloat(float f) {
-		flt = f;
-		str = String.valueOf(f);
+	StringDouble(double d) {
+		dbl = d;
+		str = String.valueOf(d);
 	}
 	
 	// Getters
-	float getFloat() {
-		return flt;
+	double getDouble() {
+		return dbl;
 	}
 	String getString() {
 		return str;
