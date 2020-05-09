@@ -2,20 +2,40 @@ package calculations;
 
 import java.util.Arrays;
 
-/* Use { (, ), +, -, /, *, ^ } as delimiters.
+/* @Author datwalrus
+ * @Date 05/07/2020
+ * 
+ * Use { (, ), +, -, /, *, ^ } as delimiters.
  * Maintain string structure, to ensure proper treatment of order
  * 
  * 
  */
 
 /* 
- * This class is used to contain a char array, and the location of the operand within it.
+ * This data structure contains the variable and order.
+ */
+class varInfo {
+	char var;
+	int order;
+	
+	// Constructor
+	varInfo(char v, int o) {
+		var = v;
+		order = o;
+	}
+}
+
+
+/* 
+ * This data structure is used to contain a char array, and the location of the operand within it.
  * Used in method: splitter
  */
 class splitInfo {
 	char[] exp;
 	int ind;
-	char var;
+	varInfo var1;
+	varInfo var2;
+	int numVars;
 	// For splitting expressions at operands.
 	// This is separate in order to utilize the order of operations.
 	splitInfo(char[] c, int i){
@@ -23,10 +43,12 @@ class splitInfo {
 		ind = i;
 	}
 	// For splitting expressions at variables.
-	splitInfo(char[] c, int i, char v) {
+	splitInfo(char[] c, int i, varInfo v1, varInfo v2, int n) {
 		exp = c;
 		ind = i;
-		var = v;
+		var1 = v1;
+		var2 = v2;
+		numVars = n;
 	}
 	char[] getExpression() {
 		return exp;
@@ -34,8 +56,14 @@ class splitInfo {
 	int getIndex() {
 		return ind;
 	}
-	char getVar() {
-		return var;
+	varInfo getVar1() {
+		return var1;
+	}
+	varInfo getVar2() {
+		return var2;
+	}
+	int getNumVars() {
+		return numVars;
 	}
 }
 
@@ -61,10 +89,10 @@ public class algebraic {
 		char[] iter = str.toCharArray();
 		int startParen = 0;
 		int endParen = 0;
-
-		boolean operationStart = false; // 0 for multiplication, 1 for division, 2 for addition, 3 for subtraction
-		boolean operationEnd = false;
-
+		
+		boolean operationStart = false; // false to add multiplication symbol, true to do nothing
+		boolean operationEnd = false;   // false to add multiplication symbol, true to do nothing
+		// Locate parenthetical statement, set aside to solve.
 		for (int i = 0; i < iter.length; i++) {
 			char ch = iter[i];
 			if ( ch == '(') { 
@@ -86,11 +114,12 @@ public class algebraic {
 				break; 
 			}
 		}
-
+		// Simplify parenthetical statement.
 		String toSimplify = str.substring(startParen + 1, endParen - 1);
 		String simplified = simplify(toSimplify);
 		StringBuilder innerParen = new StringBuilder();
 
+		// if-else statements to properly order simplified parenthetical statement.
 		if ((startParen == 0) && (endParen != iter.length)) {
 			innerParen.append(simplified);
 			if (operationEnd == false) { innerParen.append("*"); }
@@ -144,25 +173,37 @@ public class algebraic {
 	// Parse string, returning value for some calculation.
 	public String simplify(String str) {
 		String begin = str;
+		boolean exState = true;
+		// Simplify exponents as much as possible.
 		do {
 			if (str.contains("^")) {
 				//for loop to calculate out first exponent
 				splitInfo info = splitter(str, '^');
 				char[] operand = info.getExpression();
 				int pos = info.getIndex();
-
+				
+				// If digits surround exponent, solve them.
 				if ((Character.isDigit(operand[pos-1])) && (Character.isDigit(operand[pos+1]))) {
 					String ans = expon(operand, pos);
 				}
+				// If one or both are variables, exit loop and continue with simplification.
 				else {
-					return str;
+					exState = false;
 				}
 			}
-		} while (false);
+		} while ((str.contains("^")) && (exState == true));
+		
+		boolean multState = true;
+		// Simplify multiplication/division expressions
+		do {
+			if ((str.contains("*")) || (str.contains("/"))) {
+				
+			}
+		} while ((str.contains("*") || str.contains("/")) && (multState == true));
 		return "";
 	}
 
-	// Handles float exponentiation
+	// Handles float exponentiation by parsing floats from string elements then recombining float into string.
 	public String expon(char[] str, int index) {
 		int len = str.length;
 
@@ -176,7 +217,8 @@ public class algebraic {
 		String result = String.valueOf(ans);
 		return result;
 	}
-	public String multiplication(String str, int index, char var1, char var2) {
+	// Handles float multiplication by parsing float from string elements then recombining float into string.
+	public String multiplication(char[] str, int index, char var1, char var2, int numVars) {
 		return "";
 	}
 	public float division(String str, int index) {
