@@ -2,79 +2,11 @@ package calculations;
 
 import java.util.Arrays;
 
-/* @Author datwalrus
- * @Date 05/07/2020
- * 
- * Use { (, ), +, -, /, *, ^ } as delimiters.
- * Maintain string structure, to ensure proper treatment of order
- * 
- * 
- */
-
-/* 
- * This data structure contains the variable and order.
- */
-class varInfo {
-	char var;
-	int order;
-	
-	// Constructor
-	varInfo(char v, int o) {
-		var = v;
-		order = o;
-	}
-}
-
-
-/* 
- * This data structure is used to contain a char array, and the location of the operand within it.
- * Used in method: splitter
- */
-class splitInfo {
-	char[] exp;
-	int ind;
-	varInfo var1;
-	varInfo var2;
-	int numVars;
-	// For splitting expressions at operands.
-	// This is separate in order to utilize the order of operations.
-	splitInfo(char[] c, int i){
-		exp = c;
-		ind = i;
-	}
-	// For splitting expressions at variables.
-	splitInfo(char[] c, int i, varInfo v1, varInfo v2, int n) {
-		exp = c;
-		ind = i;
-		var1 = v1;
-		var2 = v2;
-		numVars = n;
-	}
-	char[] getExpression() {
-		return exp;
-	}
-	int getIndex() {
-		return ind;
-	}
-	varInfo getVar1() {
-		return var1;
-	}
-	varInfo getVar2() {
-		return var2;
-	}
-	int getNumVars() {
-		return numVars;
-	}
-}
-
 /*
  * This class contains an assortment of methods used to simplify and solve algebraic expressions.
  * Specifically focusing on algebraic expressions, not calculus and differential equations.
  */
-public class algebraic {
-	public String main() {
-		return "a";
-	}
+public class Algebraic {
 	// Used to match parentheses, if this string is found in 
 	// another string, it will be split after ')'.
 	protected char[] delims = {'+','-','/','*'};
@@ -140,7 +72,7 @@ public class algebraic {
 		return innerParen.toString();
 	}
 	// Split string at delimiter requested
-	public splitInfo splitter(String str, char ch) {
+	public SplitInfo splitter(String str, char ch) {
 		char[] start = str.toCharArray();
 		int index1 = 0;
 		int index2 = 0;
@@ -166,8 +98,8 @@ public class algebraic {
 				}
 			}
 		}
-		char[] result = str.substring((index1 + 1), (index3 - 1)).toCharArray();
-		splitInfo end = new splitInfo(result, (index2 - (index1 + 1)));
+		String result = str.substring((index1 + 1), (index3 - 1));
+		SplitInfo end = new SplitInfo(result, (index2 - (index1 + 1)));
 		return end;
 	}
 	// Parse string, returning value for some calculation.
@@ -178,8 +110,8 @@ public class algebraic {
 		do {
 			if (str.contains("^")) {
 				//for loop to calculate out first exponent
-				splitInfo info = splitter(str, '^');
-				char[] operand = info.getExpression();
+				SplitInfo info = splitter(str, '^');
+				char[] operand = info.getExpression().toCharArray();
 				int pos = info.getIndex();
 				
 				// If digits surround exponent, solve them.
@@ -187,6 +119,8 @@ public class algebraic {
 					String ans = expon(operand, pos);
 				}
 				// If one or both are variables, exit loop and continue with simplification.
+				// Do not create new varInfo object yet, create object after finishing exponential simplification,
+				// when needed.
 				else {
 					exState = false;
 				}
@@ -218,16 +152,68 @@ public class algebraic {
 		return result;
 	}
 	// Handles float multiplication by parsing float from string elements then recombining float into string.
-	public String multiplication(char[] str, int index, char var1, char var2, int numVars) {
+	// Deprecate and reform into a new method, multdiv that uses an if statement from a additional parameter.
+	public String multiplication(SplitInfo split) {
+		String exp = split.getExpression();
+		int index = split.getIndex();
+		VarInfo[] vars = split.getVars();
+		if (vars.length == 0) {
+			float n1 = Float.parseFloat(exp.substring(0,index-1));
+			float n2 = Float.parseFloat(exp.substring(index+1, exp.length()));
+			float fin = n1*n2;
+			String result = String.valueOf(fin);
+			return result;
+		}
+		else if (vars.length == 2) {
+			char v1 = vars[0].getVar();
+			String o1 = vars[0].getOrder().getString();
+			char v2 = vars[1].getVar();
+			String o2 = vars[1].getOrder().getString();
+			if (v1 == v2) {
+				boolean numeric = true;
+				String order = null;
+				try {
+					float o3 = Float.parseFloat(o1) + Float.parseFloat(o2);
+					order = String.valueOf(o3);
+				} catch (NumberFormatException e) {
+					numeric = false;
+				}
+				if (numeric) {
+					String result = Character.toString(v1) + "^" + order;
+					return result;
+				}
+				else {
+					Boolean numeric2 = true;
+					String result;
+					try {
+						float temp = Float.parseFloat(o2);
+					} catch (NumberFormatException e) {
+						numeric2 = false;
+					}
+					if (numeric2) {
+						result = Character.toString(v1) + "^" + o2 + o1;
+					}
+					else {
+						result = Character.toString(v1) + "^" + o1 + o2;
+					}
+					return result;
+				}
+			}
+			else {
+				if (Float.parseFloat(o1) > 1) {
+					
+				}
+			}
+		}
 		return "";
 	}
-	public float division(String str, int index) {
-		return 0;
+	public String division(SplitInfo split) {
+		return "";
 	}
-	public float addition(String str, int index) {
-		return 0;
+	public String addition(SplitInfo split) {
+		return "";
 	}
-	public float subtraction(String str, int index) {
-		return 0;
+	public String subtraction(SplitInfo split) {
+		return "";
 	}
 }
