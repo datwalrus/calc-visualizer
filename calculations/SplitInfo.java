@@ -1,10 +1,10 @@
 package calculations;
 
-
 /* Data structure.
  * This data structure is used to contain a char array, and the location of the operand within it.
  * Used in method: splitter
  */
+
 public class SplitInfo {
 	// Fields
 	String exp;
